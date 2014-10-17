@@ -82,6 +82,31 @@ textureSlots = {
     #
     "daylight_detector_side": (step(20),step(2)),
     # End Third Row
+
+    # Start Fourth Row
+    "sponge": (step(0), step(3)),
+    "glass": (step(1), step(3)),
+    "diamond_ore": (step(2), step(3)),
+    "redstone_ore": (step(3), step(3)),
+    #
+    #
+    "stonebrick": (step(6), step(3)),
+    "deadbush": (step(7), step(3)),
+    "fern": (step(8), step(3)),
+    "dirt_podzol_top": (step(9), step(3)),
+    "dirt_podzol_side": (step(10), step(3)),
+    "crafting_table_side": (step(11), step(3)),
+    "crafting_table_front": (step(12), step(3)),
+    "furnace_front_on": (step(13), step(3)),
+    "furnace_top": (step(14), step(3)),
+    "sapling_spruce": (step(15), step(3)),
+    #
+    #
+    #
+    #
+    # Finished Fourth Row
+
+    # Start Fifth Row
     }
 
 class ResourcePack:
@@ -90,6 +115,7 @@ class ResourcePack:
         self.zipfile = zipfile
         self.pack_name = name
         self.block_image = {}
+        self.old_terrain = Image.open('terrain.png')
 
         self.open_pack()
 
@@ -120,7 +146,19 @@ class ResourcePack:
                 slot = textureSlots[tex]
                 new_terrain.paste(image, slot, image)
             except:
-                pass
+                pass       
+        # Do special blocks
+        # Start Ender Chest
+        ender_copy = self.old_terrain.copy()
+        ender_front = ender_copy.crop((step(16),step(2),step(16)+16,step(2)+16))
+        new_terrain.paste(ender_front, (step(16), step(2)), ender_front)
+
+        ender_top = ender_copy.crop((step(17),step(2),step(17)+16,step(2)+16))
+        new_terrain.paste(ender_top, (step(17), step(2)), ender_top)
+
+        ender_side = ender_copy.crop((step(18),step(2),step(18)+16,step(2)+16))
+        new_terrain.paste(ender_side, (step(18), step(2)), ender_side)
+        
         
         new_terrain.save(self.pack_name.replace(" ", "_")+".png")
         new_terrain.show()
