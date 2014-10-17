@@ -104,9 +104,30 @@ textureSlots = {
     #
     #
     #
-    # Finished Fourth Row
+    # End Fourth Row
 
     # Start Fifth Row
+    "wool_colored_white": (step(0), step(4)),
+    "mob_spawner": (step(1), step(4)),
+    "snow": (step(2), step(4)),
+    "ice": (step(3), step(4)),
+    "grass_side_snowed": (step(4), step(4)),
+    "cactus_top": (step(5), step(4)),
+    "cactus_side": (step(6), step(4)),
+    "cactus_bottom": (step(7), step(4)),
+    "clay": (step(8), step(4)),
+    "reeds": (step(9), step(4)),
+    "jukebox_side": (step(10), step(4)),
+    "jukebox_top": (step(11), step(4)),
+    "waterlily": (step(12), step(4)),
+    "mycelium_side": (step(13), step(4)),
+    "mycelium_top": (step(14), step(4)),
+    "sapling_birch": (step(15), step(4)),
+    #
+    #
+    "dropper_front_vertical": (step(18), step(4)),
+    "daylight_detector_inverted_top": (step(19), step(4)),
+    # End Fifth Row
     }
 
 class ResourcePack:
@@ -149,15 +170,33 @@ class ResourcePack:
                 pass       
         # Do special blocks
         # Start Ender Chest
-        ender_copy = self.old_terrain.copy()
-        ender_front = ender_copy.crop((step(16),step(2),step(16)+16,step(2)+16))
+        copy = self.old_terrain.copy()
+        ender_front = copy.crop((step(16),step(2),step(16)+16,step(2)+16))
         new_terrain.paste(ender_front, (step(16), step(2)), ender_front)
 
-        ender_top = ender_copy.crop((step(17),step(2),step(17)+16,step(2)+16))
+        ender_top = copy.crop((step(17),step(2),step(17)+16,step(2)+16))
         new_terrain.paste(ender_top, (step(17), step(2)), ender_top)
 
-        ender_side = ender_copy.crop((step(18),step(2),step(18)+16,step(2)+16))
+        ender_side = copy.crop((step(18),step(2),step(18)+16,step(2)+16))
         new_terrain.paste(ender_side, (step(18), step(2)), ender_side)
+
+        ender_bottom = copy.crop((step(19),step(2),step(19)+16,step(2)+16))
+        new_terrain.paste(ender_bottom, (step(19), step(2)), ender_bottom)
+        # End Ender Chest
+
+        # Start Normal Chest
+        normal_top = copy.crop((step(16),step(3),step(16)+16,step(3)+16))
+        new_terrain.paste(normal_top, (step(16), step(3)), normal_top)
+
+        normal_side = copy.crop((step(17),step(3),step(17)+16,step(3)+16))
+        new_terrain.paste(normal_side, (step(17),step(3)), normal_side)
+
+        normal_front = copy.crop((step(18),step(3),step(18)+16,step(3)+16))
+        new_terrain.paste(normal_front, (step(18),step(3)), normal_front)
+
+        idk = copy.crop((step(19),step(3),step(19)+16,step(3)+16))
+        new_terrain.paste(idk, (step(19),step(3)), idk)
+        # End Normal Chest
         
         
         new_terrain.save(self.pack_name.replace(" ", "_")+".png")
