@@ -238,20 +238,20 @@ class graphicsPanel(Dialog):
         bufferLimitRow = mceutils.IntInputRow("Vertex Buffer Limit (MB): ",
                                               ref=Settings.vertexBufferLimit.propertyRef(), width=100, min=0)
 
-        fastLeavesRow = mceutils.CheckBoxLabel("Fast Leaves",
-                                               ref=Settings.fastLeaves.propertyRef(),
-                                               tooltipText="Leaves are solid, like Minecraft's 'Fast' graphics")
+        #fastLeavesRow = mceutils.CheckBoxLabel("Fast Leaves",
+        #                                       ref=Settings.fastLeaves.propertyRef(),
+        #                                       tooltipText="Leaves are solid, like Minecraft's 'Fast' graphics")
 
-        roughGraphicsRow = mceutils.CheckBoxLabel("Rough Graphics",
-                                                  ref=Settings.roughGraphics.propertyRef(),
-                                                  tooltipText="All blocks are drawn the same way (overrides 'Fast Leaves')")
+        #roughGraphicsRow = mceutils.CheckBoxLabel("Rough Graphics",
+        #                                          ref=Settings.roughGraphics.propertyRef(),
+        #                                          tooltipText="All blocks are drawn the same way (overrides 'Fast Leaves')")
 
         enableMouseLagRow = mceutils.CheckBoxLabel("Enable Mouse Lag",
                                                    ref=Settings.enableMouseLag.propertyRef(),
                                                    tooltipText="Enable choppy mouse movement for faster loading.")
 
-        settingsColumn = albow.Column((fastLeavesRow,
-                                       roughGraphicsRow,
+        settingsColumn = albow.Column((#fastLeavesRow,
+                                       #roughGraphicsRow,
                                        enableMouseLagRow,
                                        #                                  texturePackRow,
                                        fieldOfViewRow,

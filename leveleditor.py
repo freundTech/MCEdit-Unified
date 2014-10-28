@@ -130,8 +130,6 @@ Settings.hiddableOres = Settings("hiddable ores", [7, 16, 15, 21, 73, 14, 56, 15
 for ore in Settings.hiddableOres.get():
     setattr(Settings, "showOre{}".format(ore), Settings("show ore {}".format(ore), True))
 
-Settings.fastLeaves = Settings("fast leaves", True)
-Settings.roughGraphics = Settings("rough graphics", False)
 Settings.showChunkRedraw = Settings("show chunk redraw", True)
 Settings.drawSky = Settings("draw sky", True)
 Settings.drawFog = Settings("draw fog", True)
