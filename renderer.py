@@ -1181,7 +1181,10 @@ class GenericBlockRenderer(BlockRenderer):
 
         for (direction, exposedFaceIndices) in enumerate(facingBlockIndices):
             facingBlockLight = areaBlockLights[self.directionOffsets[direction]]
+            #if (isFullBlock) : (MADE UP VARIABLE. USE VERTICES TO WORK OUT IF FULL)
             blockIndices = materialIndices & exposedFaceIndices
+            #else
+            #    blockIndices = materialIndices
 
             theseBlocks = blocks[blockIndices]
             bdata = blockData[blockIndices]
@@ -1207,8 +1210,8 @@ class GenericBlockRenderer(BlockRenderer):
 
     makeVertices = makeGenericVertices
 
-from glutils import DisplayList
 
+from glutils import DisplayList
 
 class MCRenderer(object):
     isPreviewer = False
