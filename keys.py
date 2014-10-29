@@ -448,7 +448,8 @@ class KeyConfigPanel(Dialog):
         panel.mouse_up = panelMouseUp
 
         keyname = panel.present()
-        if keyname != "Escape" and keyname != "Shift-Escape":
+        print keyname
+        if keyname != "Escape" and keyname != "Shift-Escape" and keyname not in ["Alt-F4","F1","F2","F3","F4","F5","1","2","3","4","5","6","7","8","9","Ctrl-Alt-F9","Ctrl-Alt-F10"]:
             if "Modifier" in configKey:
                  occupiedKeys = []
                  if keyname != "Shift" and keyname != "Ctrl" and keyname != "Alt":
@@ -459,7 +460,7 @@ class KeyConfigPanel(Dialog):
                                      .format(keyname))
                     return True
             else:        
-                occupiedKeys = [(v, k) for (k, v) in config.config.items("Keys") if config.getNewKey(v) == keyname and k != configKey.lower()]
+                occupiedKeys = [(v, k) for (k, v) in config.config.items("Keys") if v == keyname and k != configKey.lower() and "modifier" not in k]
             oldkey = config.config.get("Keys", configKey)
             config.config.set("Keys", configKey, keyname)
             self.changes[configKey] = oldkey
@@ -480,5 +481,13 @@ class KeyConfigPanel(Dialog):
                     return True 
         elif keyname == "Shift-Escape":
             config.config.set("Keys", configKey, "None")
+        elif keyname != "Escape":
+            self.askAssignKey(configKey,
+                                     tr("You can't use the key {0}. "
+                                     "Press a new key.\n\n"
+                                     "Press ESC to cancel. Press Shift-ESC to unbind.")
+                                     .format(keyname))
+            return True
+            
         else:
             return True
