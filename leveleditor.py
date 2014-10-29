@@ -1061,6 +1061,9 @@ class CameraViewport(GLViewport):
 
         class ChestEditOperation(Operation):
             def perform(self, recordUndo=True):
+                if self.level.saving:
+                    alert(tr("Cannot perform action while saving is taking place"))
+                    return
                 level.addTileEntity(tileEntityTag)
 
             def undo(self):
