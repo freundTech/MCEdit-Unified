@@ -6,6 +6,10 @@ def step(slot):
     texSlot = slot*16
     return texSlot
 
+def r_step(slot):
+    texSlot = slot/16
+    return texSlot
+
 unknown_textures = [
     (step(14),step(0)),
     (step(9),step(1)),
@@ -202,9 +206,32 @@ textureSlots = {
     "pumpkin_stem_connected": (step(15),step(7)),
     #
     #
-    #
+    "repeater_off_west": (step(18),step(7)),
     #
     # End Eigth Row
+
+    # Start Ninth Row
+    "rail_normal": (step(0),step(8)),
+    "wool_colored_red": (step(1),step(8)),
+    "wool_colored_pink": (step(2),step(8)),
+    "repeater_off_south": (step(3),step(8)),
+    "leaves_spruce": (step(4),step(8)),
+    #
+    "bed_feet_top": (step(6),step(8)),
+    "bed_head_top": (step(7),step(8)),
+    "melon_side": (step(8),step(8)),
+    "melon_top": (step(9),step(8)),
+    #
+    #
+    #
+    "mushroom_block_skin_stem": (step(13),step(8)),
+    "mushroom_block_inside": (step(14),step(8)),
+    "vine": (step(15),step(8)),
+    #
+    #
+    "repeater_off_north": (step(18),step(8)),
+    #
+    # End Ninth Row
     }
 
 class ResourcePack:
@@ -213,7 +240,12 @@ class ResourcePack:
         self.zipfile = zipfile
         self.pack_name = name
         self.block_image = {}
+        self.propogated_textures = []
+        self.all_texture_slots = []
         self.old_terrain = Image.open('terrain.png')
+        for texx in xrange(0,33):
+            for texy in xrange(0,33):
+                self.all_texture_slots.append((step(texx),step(texy)))
 
         self.open_pack()
 
@@ -231,6 +263,11 @@ class ResourcePack:
                     possible_texture = Image.open("textures/"+name.filename)
                     if possible_texture.size == (16, 16):
                         self.block_image[block_name] = Image.open("textures/"+name.filename)
+                        if block_name == "repeater_off":
+                            self.block_image["repeater_off_west"] = Image.open("textures/"+name.filename).rotate(-90)
+                            self.block_image["repeater_off_north"] = Image.open("textures/"+name.filename).rotate(180)
+                            self.block_image["repeater_off_east"] = Image.open("textures/"+name.filename).rotate(90)
+                            self.block_image["repeater_off_south"] = Image.open("textures/"+name.filename)
                     else:
                         if possible_texture.size == (32, 32):
                             self.block_image[block_name] = Image.open("textures/"+name.filename).resize((16, 16))
@@ -246,8 +283,9 @@ class ResourcePack:
                 image = self.block_image[tex]
                 slot = textureSlots[tex]
                 new_terrain.paste(image, slot, image)
+                self.propogated_textures.append(slot)
             except:
-                pass       
+                pass
         # Do special blocks
         # Start Ender Chest
         copy = self.old_terrain.copy()
@@ -300,12 +338,11 @@ class ResourcePack:
         # Start Double Trapped Chest
         trapped_double_front = copy.crop((step(16),step(7),step(16)+step(2),step(7)+step(2)))
         new_terrain.paste(trapped_double_front, (step(16),step(7)), trapped_double_front)
-        
 
-        unknown_tex = copy.crop((step(31),step(31),step(31)+16,step(31)+16))
-        for coord in unknown_textures:
-            new_terrain.paste(unknown_tex, coord, unknown_tex)
-        
+        for t in self.all_texture_slots:
+            if t not in self.propogated_textures:
+                old_tex = copy.crop((t[0],t[1],t[0]+16,t[1]+16))
+                new_terrain.paste(old_tex, t, old_tex)
         
         new_terrain.save(self.pack_name.replace(" ", "_")+".png")
         new_terrain.show()
