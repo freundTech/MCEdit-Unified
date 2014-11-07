@@ -14,6 +14,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE."""
 #-# Modifiedby D.C.-G. for translation purpose
 from OpenGL import GL
 import numpy
+import os
 from albow import TableView, TableColumn, Label, Button, Column, CheckBox, AttrRef, Row, ask, alert
 from albow.translate import tr
 import config
@@ -29,6 +30,47 @@ from pymclevel import version_utils
 import logging
 
 log = logging.getLogger(__name__)
+
+class PlayerRemoveOperation(Operation):
+    undoFile = None
+
+    def __init__(self, tool, player="Player"):
+        super(PlayerRemoveOperation, self).__init__(tool.editor, tool.editor.level)
+        self.tool = tool
+        self.player = player
+        self.path = self.editor.level.playersFolder
+
+    def perform(self, recordUndo=True):
+        if self.level.saving:
+            alert(tr("Cannot perform action while saving is taking place"))
+            return
+        
+        if self.player != "Player":
+            if recordUndo:
+                f = open(self.path + os.sep + self.player + ".dat", "rb")
+                self.undoFile = f.read()
+                f.close()
+
+            self.tool.editor.level.players.remove(self.player)
+            self.tool.panel.players.remove(version_utils.getPlayerNameFromUUID(self.player))
+
+            while self.tool.panel.table.index >= len(self.tool.panel.players):
+                self.tool.panel.table.index -= 1
+
+        else:
+            alert("Can't delete the default Player!")
+
+    def undo(self):
+        if not (self.undoFile is None):
+            f = open(self.path + os.sep + self.player + ".dat", "wb")
+            f.write(self.undoFile)
+            f.close()
+
+            self.tool.editor.level.players.append(self.player)
+            self.tool.panel.players.append(version_utils.getPlayerNameFromUUID(self.player))
+
+    def redo(self):
+        self.perform()
 
 
 class PlayerMoveOperation(Operation):
@@ -190,13 +232,15 @@ class PlayerPositionPanel(Panel):
         tableview.click_row = selectTableRow
         self.table = tableview
         l = Label("Player: ")
-        col = [l, tableview]
+        col = [l, self.table]
 
+        addButton = Button("Add Player", action=self.tool.addPlayer)
+        removeButton = Button("Remove Player", action=self.tool.removePlayer)
         gotoButton = Button("Goto Player", action=self.tool.gotoPlayer)
         gotoCameraButton = Button("Goto Player's View", action=self.tool.gotoPlayerCamera)
         moveButton = Button("Move Player", action=self.tool.movePlayer)
         moveToCameraButton = Button("Align Player to Camera", action=self.tool.movePlayerToCamera)
-        col.extend([gotoButton, gotoCameraButton, moveButton, moveToCameraButton])
+        col.extend([addButton, removeButton, gotoButton, gotoCameraButton, moveButton, moveToCameraButton])
 
         col = Column(col)
         self.add(col)
@@ -218,6 +262,19 @@ class PlayerPositionTool(EditorTool):
 
     def reloadTextures(self):
         self.charTex = loadPNGTexture('char.png')
+
+    @alertException
+    def addPlayer(self):
+        pass
+
+    @alertException
+    def removePlayer(self):
+        player = self.panel.selectedPlayer
+        
+        op = PlayerRemoveOperation(self, player)
+
+        self.editor.addOperation(op)
+        self.editor.addUnsavedEdit()
 
     @alertException
     def movePlayer(self):
