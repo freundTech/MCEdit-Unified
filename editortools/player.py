@@ -15,7 +15,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE."""
 from OpenGL import GL
 import numpy
 import os
-from albow import TableView, TableColumn, Label, Button, Column, CheckBox, AttrRef, Row, ask, alert
+from albow import TableView, TableColumn, Label, Button, Column, CheckBox, AttrRef, Row, ask, alert, input_text
 from albow.translate import tr
 import config
 from editortools.editortool import EditorTool
@@ -27,18 +27,20 @@ from operation import Operation
 import pymclevel
 from pymclevel.box import BoundingBox, FloatBox
 from pymclevel import version_utils
+from pymclevel import nbt
 import logging
+
 
 log = logging.getLogger(__name__)
 
 class PlayerRemoveOperation(Operation):
-    undoFile = None
+    undoTag = None
 
     def __init__(self, tool, player="Player"):
         super(PlayerRemoveOperation, self).__init__(tool.editor, tool.editor.level)
         self.tool = tool
         self.player = player
-        self.path = self.editor.level.playersFolder
+        self.level = self.tool.editor.level
 
     def perform(self, recordUndo=True):
         if self.level.saving:
@@ -47,31 +49,116 @@ class PlayerRemoveOperation(Operation):
         
         if self.player != "Player":
             if recordUndo:
-                f = open(self.path + os.sep + self.player + ".dat", "rb")
-                self.undoFile = f.read()
-                f.close()
-
-            self.tool.editor.level.players.remove(self.player)
+                self.undoTag = self.level.getPlayerTag(self.player)
+                
+            self.level.players.remove(self.player)
             self.tool.panel.players.remove(version_utils.getPlayerNameFromUUID(self.player))
-
+            
             while self.tool.panel.table.index >= len(self.tool.panel.players):
                 self.tool.panel.table.index -= 1
+            self.tool.markerList.invalidate()
 
         else:
             alert("Can't delete the default Player!")
 
     def undo(self):
-        if not (self.undoFile is None):
-            f = open(self.path + os.sep + self.player + ".dat", "wb")
-            f.write(self.undoFile)
-            f.close()
+        if not (self.undoTag is None):
+            self.level.playerTagCache[self.level.getPlayerPath(self.player)] = self.undoTag
 
-            self.tool.editor.level.players.append(self.player)
+            self.level.players.append(self.player)
             self.tool.panel.players.append(version_utils.getPlayerNameFromUUID(self.player))
+
+        self.tool.markerList.invalidate()
 
     def redo(self):
         self.perform()
 
+class PlayerAddOperation(Operation):
+    playerTag = None
+
+    def __init__(self, tool):
+        super(PlayerAddOperation, self).__init__(tool.editor, tool.editor.level)
+        self.tool = tool
+        self.level = self.tool.editor.level
+
+    def perform(self, recordUndo=True):
+        self.player = input_text("Enter a Player Name: ", 160)
+        if len(self.player) > 16:
+            alert("Name to long. Maximum name length is 16.")
+            return
+        elif len(self.player) < 4:
+            alert("Name to short. Minimum name length is 4.")
+            return
+        else:
+            try:
+                self.uuid = version_utils.getUUIDFromPlayerName(self.player)
+                self.player = version_utils.getPlayerNameFromUUID(self.uuid) #Case Corrected
+            except:
+                action = ask("Could not get {}'s UUID. Please make sure, that you are connectedto the internet and that the player {} exists".format(self.player, self.player), ["Enter UUID manually", "Cancel"])
+                if action == "Enter UUID manually":
+                    self.uuid = input_text("Enter a Player UUID: ", 160)
+                    self.player = version_utils.getPlayerNameFromUUID(self.uuid)
+                    if self.player == self.uuid.replace("-", ""):
+                        if ask("UUID was not found. Continue anyways?") == "Cancel":
+                            return
+                else:
+                    return
+            if self.uuid in self.level.players:
+                alert("Player already exists in this World.")
+                return
+            
+            self.playerTag = self.newPlayer()
+            
+            self.level.playerTagCache[self.level.getPlayerPath(self.uuid)] = self.playerTag
+
+            self.level.players.append(self.uuid)
+            self.tool.panel.players.append(self.player)
+            self.tool.panel.player_UUID[self.player] = self.uuid
+
+        self.tool.markerList.invalidate()
+        self.tool.movingPlayer = self.uuid
+                         
+        print(self.level.players)
+        print(self.tool.panel.players)
+
+    def newPlayer(self):
+        playerTag = nbt.TAG_Compound()
+
+        playerTag['Air'] = nbt.TAG_Short(300)
+        playerTag['AttackTime'] = nbt.TAG_Short(0)
+        playerTag['DeathTime'] = nbt.TAG_Short(0)
+        playerTag['Fire'] = nbt.TAG_Short(-20)
+        playerTag['Health'] = nbt.TAG_Short(20)
+        playerTag['HurtTime'] = nbt.TAG_Short(0)
+        playerTag['Score'] = nbt.TAG_Int(0)
+        playerTag['FallDistance'] = nbt.TAG_Float(0)
+        playerTag['OnGround'] = nbt.TAG_Byte(0)
+
+        playerTag["Inventory"] = nbt.TAG_List()
+
+        playerTag['Motion'] = nbt.TAG_List([nbt.TAG_Double(0) for i in range(3)])
+        playerTag['Pos'] = nbt.TAG_List([nbt.TAG_Double([0.5, 2.8, 0.5][i]) for i in range(3)])
+        playerTag['Rotation'] = nbt.TAG_List([nbt.TAG_Float(0), nbt.TAG_Float(0)])
+
+        return playerTag
+
+    def undo(self):
+        self.level.players.remove(self.uuid)
+        self.tool.panel.players.remove(self.player)
+        self.tool.panel.player_UUID.pop(self.player)
+
+        self.tool.markerList.invalidate()
+
+    def redo(self):
+        if not (self.playerTag is None):
+            self.level.playerTagCache[self.level.getPlayerPath(self.uuid)] = self.playerTag
+
+            self.level.players.append(self.uuid)
+            self.tool.panel.players.append(self.player)
+            self.tool.panel.player_UUID[self.player] = self.uuid
+
+        self.tool.markerList.invalidate()
+        
 
 class PlayerMoveOperation(Operation):
     undoPos = None
@@ -259,13 +346,17 @@ class PlayerPositionTool(EditorTool):
     toolIconName = "player"
     tooltipText = "Players"
     movingPlayer = None
+    moveType = None
 
     def reloadTextures(self):
         self.charTex = loadPNGTexture('char.png')
 
     @alertException
     def addPlayer(self):
-        pass
+        op = PlayerAddOperation(self)
+
+        self.editor.addOperation(op)
+        self.editor.addUnsavedEdit()
 
     @alertException
     def removePlayer(self):
@@ -278,6 +369,7 @@ class PlayerPositionTool(EditorTool):
 
     @alertException
     def movePlayer(self):
+        self.moveType = "move"
         self.movingPlayer = self.panel.selectedPlayer
 
     @alertException
@@ -484,7 +576,12 @@ class PlayerPositionTool(EditorTool):
         op = PlayerMoveOperation(self, pos, self.movingPlayer)
         self.movingPlayer = None
 
-        self.editor.addOperation(op)
+        if self.moveType == "move":
+            self.editor.addOperation(op)
+        else:
+            self.editor.performWithRetry(op) #Recording of Undo when adding player
+
+        self.moveType = None
         self.editor.addUnsavedEdit()
         
     def keyDown(self, evt):
