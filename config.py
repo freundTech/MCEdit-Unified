@@ -16,7 +16,6 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE."""
 config.py
 Configuration settings and storage.
 """
-import os
 import logging
 import collections
 import ConfigParser
@@ -36,7 +35,7 @@ def getNewKey(value, i=0):
         value = value[6:]
     if value >= 'a' and value <= 'z':
         value = value.replace(value[0], value[0].upper(), 1)
-    if i >= 36 and "Ctrl-" not in value:
+    if i >= 42 and "Ctrl-" not in value:
         value = "Ctrl-" + value
     if value == "Mouse3":
         value = "Button 3"
@@ -122,7 +121,7 @@ def loadConfig():
             else:
                 config.set("Version", "version", "1.1.2.0-new")
             saveConfig()
-    
+
     return config
 
 
@@ -152,10 +151,18 @@ up = Space
 down = Shift
 brake = C
 
-rotate = E
-roll = R
+rotate (clone) = E
+roll (clone) = R
 flip = F
 mirror = G
+
+rotate (brush) = E
+roll (brush) = G
+increase brush = R
+decrease brush = F
+
+replace shortcut = R
+
 swap = X
 
 pan left = J
@@ -179,13 +186,14 @@ long-distance mode = Alt-Z
 fly mode = None
 
 debug overlay = 0
-blocks-only = Alt
 show block info = Alt
 pick block = Alt
 select chunks = Z
 deselect chunks = Alt
 brush line tool = Z
 snap clone to axis = Ctrl
+blocks-only modifier = Alt
+fast increment modifier = Ctrl
 
 quit = Ctrl-Q
 view distance = Ctrl-F

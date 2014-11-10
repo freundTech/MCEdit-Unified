@@ -1,11 +1,8 @@
 #-# Modified by D.C.-G. for translation purpose
-from numpy.core.umath import absolute
-from pygame import key
 from albow import Label
-from albow.translate import tr
+from albow.translate import _
 from pymclevel.box import Vector
 import config
-import leveleditor
 from glbackground import GLBackground
 import keys
 
@@ -27,29 +24,15 @@ class NudgeButton(GLBackground):
 
         # tooltipBacking = Panel()
         # tooltipBacking.bg_color = (0, 0, 0, 0.6)
-        keys = [config.config.get("Keys", k).upper() for k in ("Forward", "Back", "Left", "Right", "Up", "Down")]
+        keys = [config.config.get("Keys", k) for k in ("Forward", "Back", "Left", "Right", "Up", "Down")]
 
-        nudgeLabel.tooltipText = tr("Click and hold.  While holding, use the movement keys ({0}/{1}/{2}/{3}/{4}/{5}) to nudge. Left mouse to nudge 1 block, Right mouse to nudge 16.").format(
+        nudgeLabel.tooltipText = _("Click and hold.  While holding, use the movement keys ({0}/{1}/{2}/{3}/{4}/{5}) to nudge. Left mouse to nudge a block, Right mouse to nudge a greater distance.").format(
             *keys)
         # tooltipBacking.shrink_wrap()
 
     def mouse_down(self, event):
         self.count += 1
         self.focus()
-        if self.editor.usedKeys[0] == 1:
-            self.editor.notMove[0] = 1
-        if self.editor.usedKeys[1] == 1:
-            self.editor.notMove[1] = 1
-        if self.editor.usedKeys[2] == 1:
-            self.editor.notMove[2] = 1
-        if self.editor.usedKeys[3] == 1:
-            self.editor.notMove[3] = 1
-        if self.editor.usedKeys[4] == 1:
-            self.editor.notMove[4] = 1
-        if self.editor.usedKeys[5] == 1:
-            self.editor.notMove[5] = 1
-        self.editor.cameraInputs = [0., 0., 0.]
-        self.editor.usedKeys = [0, 0, 0, 0, 0, 0]
         if event.button == 3:
             self.editor.rightClickNudge = 1
 
@@ -62,6 +45,8 @@ class NudgeButton(GLBackground):
             self.count = 0
 
     def key_down(self, evt):
+        self.editor.key_down(evt, 1, 1)
+
         keyname = keys.getKey(evt)
         if keyname == config.config.get("Keys", "Up"):
             self.nudge(Vector(0, 1, 0))
@@ -87,5 +72,6 @@ class NudgeButton(GLBackground):
             self.nudge(Vector(*left))
         if keyname == config.config.get("Keys", "Right"):
             self.nudge(Vector(*right))
-            
-        self.editor.key_down(evt, 1)
+
+    def key_up(self, evt):
+        self.editor.key_up(evt)

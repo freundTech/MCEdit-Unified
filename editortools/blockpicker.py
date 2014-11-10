@@ -4,7 +4,6 @@ from editortools import thumbview
 from editortools import blockview
 from glbackground import GLBackground
 from mceutils import CheckBoxLabel
-from pygame import key
 from pymclevel import materials
 import keys
 from pymclevel.materials import Block
@@ -26,7 +25,7 @@ class BlockPicker(Dialog):
     def __init__(self, blockInfo, materials, *a, **kw):
         self.allowWildcards = False
         Dialog.__init__(self, *a, **kw)
-        panelWidth = 490
+        panelWidth = 518
 
         self.click_outside_response = 0
         self.materials = materials
@@ -73,7 +72,7 @@ class BlockPicker(Dialog):
             return ident
 
         tableview = TableView(columns=[TableColumn(" ", 24, "l", lambda x: ""),
-                                       TableColumn("Name", 391, "l", formatBlockName),
+                                       TableColumn("Name", 415, "l", formatBlockName),
                                        TableColumn("ID", 45, "l", formatBlockID)
                                        ])
         tableicons = [blockview.BlockView(materials) for i in range(tableview.rows.num_rows())]

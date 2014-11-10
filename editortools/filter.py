@@ -15,9 +15,8 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE."""
 import collections
 import os
 import traceback
-from albow import FloatField, IntField, AttrRef, Row, Label, Widget, TabPanel, CheckBox, Column, Button, \
-    TextFieldWrapped, TextField
-from albow.translate import tr
+from albow import FloatField, IntField, AttrRef, Row, Label, Widget, TabPanel, CheckBox, Column, Button, TextField
+from albow.translate import _
 from editortools.blockview import BlockButton
 from editortools.editortool import EditorTool
 from glbackground import Panel
@@ -33,6 +32,7 @@ import json
 import shutil
 import directories
 import sys
+import mceutils
 
 
 def alertFilterException(func):
@@ -41,7 +41,7 @@ def alertFilterException(func):
             func(*args, **kw)
         except Exception, e:
             print traceback.format_exc()
-            alert(tr(u"Exception during filter operation. See console for details.\n\n{0}").format(e))
+            alert(_(u"Exception during filter operation. See console for details.\n\n{0}").format(e))
 
     return _func
 
@@ -291,7 +291,7 @@ class FilterToolPanel(Panel):
             try:
                 self.filterOptionsPanel = FilterModuleOptions(self.tool, module)
             except Exception, e:
-                alert(tr("Error creating filter inputs for {0}: {1}").format(module, e))
+                alert(_("Error creating filter inputs for {0}: {1}").format(module, e))
                 traceback.print_exc()
                 self.tool.filterModules.pop(self.selectedFilterName)
                 self.selectedFilterName = tool.filterNames[0]
@@ -339,7 +339,7 @@ class FilterOperation(Operation):
 
     def perform(self, recordUndo=True):
         if self.level.saving:
-            alert(tr("Cannot perform action while saving is taking place"))
+            alert(_("Cannot perform action while saving is taking place"))
             return
         if recordUndo:
             self.undoLevel = self.extractUndo(self.level, self.box)
@@ -365,7 +365,7 @@ class FilterTool(EditorTool):
 
     @property
     def statusText(self):
-        return "Choose a filter, then click Filter or press ENTER to apply it."
+        return "Choose a filter, then click Filter or press Enter to apply it."
 
     def toolEnabled(self):
         return not (self.selectionBox() is None)
@@ -406,7 +406,7 @@ class FilterTool(EditorTool):
         updatedFilters = 0
         filtersDir = directories.getFiltersDir()
         try:
-            os.mkdir(filtersDir + "/updates")
+            os.mkdir(filtersDir+os.path.sep+"updates")
         except OSError:
             pass
         for module in self.filterModules.values():
@@ -416,11 +416,11 @@ class FilterTool(EditorTool):
                     versionJSON = json.loads(urllib2.urlopen(module.UPDATE_URL).read())
                     if module.VERSION != versionJSON["Version"]:
                         urllib.urlretrieve(versionJSON["Download-URL"],
-                                           filtersDir + "/updates/" + versionJSON["Name"])
+                                           filtersDir+os.path.sep+"updates"+os.path.sep+versionJSON["Name"])
                         updatedFilters = updatedFilters + 1
-        for f in os.listdir(filtersDir + "/updates"):
-            shutil.copy(filtersDir + "/updates/" + f, filtersDir)
-        shutil.rmtree(filtersDir + "/updates/")
+        for f in os.listdir(filtersDir+os.path.sep+"updates"):
+            shutil.copy(filtersDir+os.path.sep+"updates"+os.path.sep+f, filtersDir)
+        shutil.rmtree(filtersDir+os.path.sep+"updates"+os.path.sep)
         self.finishedUpdatingWidget = Widget()
         lbl = Label("Updated " + str(updatedFilters) + " filter(s) out of " + str(totalFilters))
         closeBTN = Button("Close this message", action=self.closeFinishedUpdatingWidget)
@@ -439,13 +439,14 @@ class FilterTool(EditorTool):
                 name = m.__name__
                 del sys.modules[name]
                 del m
+            mceutils.compareMD5Hashes(directories.getAllOfAFile(directories.filtersDir, ".py"))
 
         def tryImport(name):
             try:
                 return __import__(name)
             except Exception, e:
                 print traceback.format_exc()
-                alert(tr(u"Exception while importing filter module {}. See console for details.\n\n{}").format(name, e))
+                alert(_(u"Exception while importing filter module {}. See console for details.\n\n{}").format(name, e))
                 return object()
 
         filterModules = (tryImport(x[:-3]) for x in filter(lambda x: x.endswith(".py"), os.listdir(directories.getFiltersDir())))
@@ -457,7 +458,7 @@ class FilterTool(EditorTool):
             except Exception, e:
                 print traceback.format_exc()
                 alert(
-                    tr(u"Exception while reloading filter module {}. Using previously loaded module. See console for details.\n\n{}").format(
+                    _(u"Exception while reloading filter module {}. Using previously loaded module. See console for details.\n\n{}").format(
                         m.__file__, e))
 
     @property

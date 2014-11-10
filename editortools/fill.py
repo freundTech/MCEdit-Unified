@@ -14,9 +14,8 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE."""
 #-# Modified by D.C.-G. for translation purpose
 from OpenGL import GL
 import numpy
-import pygame
 from albow import Label, Button, Column, alert
-from albow.translate import tr
+from albow.translate import _
 from depths import DepthOffset
 from editortools.blockpicker import BlockPicker
 from editortools.blockview import BlockButton
@@ -43,11 +42,11 @@ class BlockFillOperation(Operation):
         self.blocksToReplace = blocksToReplace
 
     def name(self):
-        return tr("Fill with ") + self.blockInfo.name
+        return _("Fill with ") + self.blockInfo.name
 
     def perform(self, recordUndo=True):
         if self.level.saving:
-            alert(tr("Cannot perform action while saving is taking place"))
+            alert(_("Cannot perform action while saving is taking place"))
             return
         if recordUndo:
             self.undoLevel = self.extractUndo(self.level, self.destBox)
@@ -78,9 +77,9 @@ class FillToolPanel(Panel):
 
         self.fillWithLabel = Label("Fill with:", width=self.blockButton.width, align="c")
         self.fillButton = Button("Fill", action=tool.confirm, width=self.blockButton.width)
-        self.fillButton.tooltipText = "Shortcut: ENTER"
+        self.fillButton.tooltipText = "Shortcut: Enter"
 
-        rollkey = config.config.get("Keys", "Roll").upper()
+        rollkey = config.config.get("Keys", "Replace Shortcut")
 
         self.replaceLabel = replaceLabel = Label("Replace", width=self.blockButton.width)
         replaceLabel.mouse_down = lambda a: self.tool.toggleReplacing()
@@ -107,12 +106,12 @@ class FillToolPanel(Panel):
             self.swapButton = Button("Swap", action=self.swapBlockTypes, width=self.blockButton.width)
             self.swapButton.fg_color = (255, 255, 255, 255)
             self.swapButton.highlight_color = (60, 255, 60, 255)
-            swapkey = config.config.get("Keys", "Swap").upper()
+            swapkey = config.config.get("Keys", "Swap")
 
             self.swapButton.tooltipText = "Shortcut: {0}".format(swapkey)
 
             self.fillButton = Button("Replace", action=tool.confirm, width=self.blockButton.width)
-            self.fillButton.tooltipText = "Shortcut: ENTER"
+            self.fillButton.tooltipText = "Shortcut: Enter"
 
             col = (self.fillWithLabel,
                    self.blockButton,
@@ -371,8 +370,8 @@ class FillTool(EditorTool):
 
     @property
     def statusText(self):
-        return tr("Press {hotkey} to choose a block. Press {R} to enter replace mode. Click Fill or press ENTER to confirm.").format(
-            hotkey=self.hotkey, R=config.config.get("Keys", "Roll").upper())
+        return _("Press {hotkey} to choose a block. Press {R} to enter replace mode. Click Fill or press Enter to confirm.").format(
+            hotkey=self.hotkey, R=config.config.get("Keys", "Replace Shortcut"))
 
     @property
     def worldTooltipText(self):
@@ -383,7 +382,7 @@ class FillTool(EditorTool):
                 pos = self.editor.blockFaceUnderCursor[0]
                 blockID = self.editor.level.blockAt(*pos)
                 blockdata = self.editor.level.blockDataAt(*pos)
-                return tr("Click to use {0} ({1}:{2})").format(
+                return _("Click to use {0} ({1}:{2})").format(
                     self.editor.level.materials.blockWithID(blockID, blockdata).name, blockID, blockdata)
 
             except Exception, e:

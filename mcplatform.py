@@ -12,7 +12,6 @@ WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE."""
 #-# Modified by D.C.-G. for translation purpose
-from pymclevel.minecraft_server import ServerJarStorage, MCServerChunkGenerator
 
 """
 mcplatform.py
@@ -40,9 +39,8 @@ os.environ["YAML_ROOT"] = join(directories.getDataDir(), "pymclevel").encode(enc
 from pygame import display
 
 from albow import request_new_filename, request_old_filename
-from albow.translate import tr
+from albow.translate import _
 from pymclevel import minecraftSaveFileDir, getMinecraftProfileDirectory, getSelectedProfile
-from pymclevel import items
 
 try:
     import gtk
@@ -52,7 +50,6 @@ try:
 except ImportError:
     hasGtk = False #Using old method as fallback
 
-import shutil
 
 texturePacksDir = os.path.join(getMinecraftProfileDirectory(getSelectedProfile()), "texturepacks")
 #Compatibility layer for filters:
@@ -265,7 +262,7 @@ def askOpenFileGtk(title, suffixes, initialDir):
     chooser = gtk.FileChooserDialog(title,
                                     None, gtk.FILE_CHOOSER_ACTION_SAVE,
                                     (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
-                                    gtk.STOCK_SAVE, gtk.RESPONSE_OK))
+                                    gtk.STOCK_OPEN, gtk.RESPONSE_OK))
 
     chooser.set_default_response(gtk.RESPONSE_OK)
     chooser.set_current_folder(initialDir)
@@ -285,35 +282,35 @@ def askOpenFileGtk(title, suffixes, initialDir):
     chooser.add_filter(filter)
 
     response = chooser.run()
-    if response == gtk.RESPONSE_CANCEL:
+    if response == gtk.RESPONSE_OK:
+        filename = chooser.get_filename()
+    else:
         chooser.destroy()
         return # pressed cancel
-    elif response == gtk.RESPONSE_OK:
-        filename = chooser.get_filename()
     chooser.destroy()
 
     return filename
 
 def askSaveSchematic(initialDir, displayName, fileFormat):
     return askSaveFile(initialDir,
-                       title=tr('Save this schematic...'),
+                       title=_('Save this schematic...'),
                        defaultName=displayName + "." + fileFormat,
-                       filetype=tr('Minecraft Schematics (*.{0})\0*.{0}\0\0').format(fileFormat),
+                       filetype=_('Minecraft Schematics (*.{0})\0*.{0}\0\0').format(fileFormat),
                        suffix=fileFormat,
     )
 
 
 def askCreateWorld(initialDir):
-    defaultName = name = tr("Untitled World")
+    defaultName = name = _("Untitled World")
     i = 0
     while exists(join(initialDir, name)):
         i += 1
         name = defaultName + " " + str(i)
 
     return askSaveFile(initialDir,
-                       title=tr('Name this new world.'),
+                       title=_('Name this new world.'),
                        defaultName=name,
-                       filetype=tr('Minecraft World\0*.*\0\0'),
+                       filetype=_('Minecraft World\0*.*\0\0'),
                        suffix="",
     )
 
@@ -375,11 +372,12 @@ def askSaveFile(initialDir, title, defaultName, filetype, suffix):
         chooser.add_filter(filter)
 
         response = chooser.run()
-        if response == gtk.RESPONSE_CANCEL:
+        if response == gtk.RESPONSE_OK:
+            filename = chooser.get_filename()
+        else:
             chooser.destroy()
             return # pressed cancel
-        elif response == gtk.RESPONSE_OK:
-            filename = chooser.get_filename()
+
         chooser.destroy()
 
     else: #Fallback

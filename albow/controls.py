@@ -7,11 +7,8 @@ from pygame import Rect, draw
 
 from widget import Widget, overridable_property
 from theme import ThemeProperty
-from utils import blit_in_rect, frame_rect
 import resource
-import keys
-from translate import tr
-import numpy
+from translate import _
 
 
 class Control(object):
@@ -99,7 +96,7 @@ class Label(Widget):
     def __init__(self, text, width=None, **kwds):
         Widget.__init__(self, **kwds)
         font = self.font
-        text = tr(text, doNotTranslate=kwds.get('doNotTranslate', False))
+        text = _(text, doNotTranslate=kwds.get('doNotTranslate', False))
         lines = text.split("\n")
         tw, th = 0, 0
         for line in lines:
@@ -121,7 +118,7 @@ class Label(Widget):
         return self._text
 
     def set_text(self, x):
-        self._text = tr(x)
+        self._text = _(x)
 
     def get_align(self):
         return self._align
@@ -229,7 +226,7 @@ class ButtonBase(Control):
                         self.call_handler('action')
         self.get_root().ctrlClicked = -1
 
-     
+
 
 
 

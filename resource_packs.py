@@ -3,6 +3,16 @@ import zipfile
 import directories
 import os
 import shutil
+import config
+
+try:
+    import resource  # @UnresolvedImport
+    resource.setrlimit(resource.RLIMIT_NOFILE, (500,-1))
+except:
+    pass
+
+Settings = config.Settings("Settings")
+Settings.resource_pack = Settings("Resource Pack", "Default")
 
 def step(slot):
     texSlot = slot*16
@@ -179,7 +189,7 @@ textureSlots = {
     # Start Eigth Row
     "rail_normal_turned": (step(0),step(7)),
     "wool_colored_black": (step(1),step(7)),
-    "wool_colored_gray": (step(2),step(7)),
+    "wool_colored_silver": (step(2),step(7)),
     "redstone_torch_off": (step(3),step(7)),
     "log_spruce": (step(4),step(7)),
     "log_birch": (step(5),step(7)),
@@ -202,7 +212,7 @@ textureSlots = {
     # Start Ninth Row
     "rail_normal": (step(0),step(8)),
     "wool_colored_red": (step(1),step(8)),
-    "wool_colored_pink": (step(2),step(8)),
+    "wool_colored_magenta": (step(2),step(8)),
     "repeater_off_south": (step(3),step(8)),
     "leaves_spruce": (step(4),step(8)),
     #
@@ -274,7 +284,7 @@ textureSlots = {
     #
     "redstone_dust_line": (step(5),step(11)),
     "enchanting_table_side": (step(6),step(11)),
-    "obsidian": (step(7),step(11)),
+    "enchanting_table_bottom": (step(7),step(11)),
     "command_block": (step(8),step(11)),
     "itemframe_backround": (step(9),step(11)),
     "flower_pot": (step(10),step(11)),
@@ -488,13 +498,21 @@ textureSlots = {
     # Start Comparator Block
     }
 
-# FIXME: Stop creation of Resource Packs that do not have any textures (Model Packs)
 class ResourcePack:
+    '''
+    Represents a single Resource Pack
+    '''
 
     def __init__(self, zipfileFile):
         self.zipfile = zipfileFile
-        self._pack_name = zipfileFile.split("\\")[-1][:-4]
-        self.texture_path = "textures/"+self._pack_name+"/"
+        self._pack_name = zipfileFile.split(os.path.sep)[-1][:-4]
+        self.texture_path = directories.parentDir+os.path.sep+"textures"+os.path.sep+self._pack_name+os.path.sep
+        self._isEmpty = False
+        self._too_big = False
+        self.big_textures_counted = 0 
+        self.big_textures_max = 10
+        self._terrain_name = self._pack_name.replace(" ", "_")+".png"
+        self._terrain_path = "terrain-textures"+os.path.sep+self.terrain_name.replace(" ", "_")
         try:
             os.makedirs(self.texture_path)
         except OSError:
@@ -508,14 +526,25 @@ class ResourcePack:
                 self.all_texture_slots.append((step(texx),step(texy)))
 
         self.open_pack()
-        
+
     @property
     def pack_name(self):
         return self._pack_name
-    
+
     @property
     def terrain_name(self):
-        return self._texture_name
+        return self._terrain_name
+    
+    def terrain_path(self):
+        return self._terrain_path
+    
+    @property
+    def isEmpty(self):
+        return self._isEmpty
+    
+    @property
+    def tooBig(self):
+        return self._too_big
 
     def open_pack(self):
         zfile = zipfile.ZipFile(self.zipfile)
@@ -558,11 +587,14 @@ class ResourcePack:
                     else:
                         if possible_texture.size == (32, 32):
                             self.block_image[block_name] = possible_texture.resize((16, 16))
+                        if possible_texture.size == (64, 64) or possible_texture.size == (128, 128) or possible_texture.size == (256, 256):
+                            self.big_textures_counted = self.big_textures_counted + 1
                         else:
                             self.block_image[block_name] = possible_texture.crop((0,0,16,16))
+        if self.big_textures_counted >= self.big_textures_max:
+            self._too_big = True
         self.parse_terrain_png()
 
-    # FIXME: Use a Dictionary to find out were to put the textures
     def parse_terrain_png(self):
         new_terrain = Image.new("RGBA", (512, 512), None)
         for tex in self.block_image.keys():
@@ -579,28 +611,86 @@ class ResourcePack:
             if t not in self.propogated_textures:
                 old_tex = copy.crop((t[0],t[1],t[0]+16,t[1]+16))
                 new_terrain.paste(old_tex, t, old_tex)
-        
-        self._texture_name = self._pack_name.replace(" ", "_")+".png"
-        new_terrain.save("terrain-textures//"+self._pack_name.replace(" ", "_")+".png")
+                
+        new_terrain.save(self._terrain_path)
         try:
             os.remove(self._pack_name.replace(" ", "_")+".png")
         except:
             pass
-        #new_terrain.show()
-
-def setup_terrain_textures():
+        if self.propogated_textures == []:
+            os.remove(self._terrain_path)
+            self._isEmpty = True
+        if self._too_big:
+            os.remove(self._terrain_path)
+        del self.block_image
+        
+class DefaultResourcePack(ResourcePack):
+    
+    def __init__(self):
+        self._isEmpty = False
+        self._too_big = False
+        self._terrain_path = "terrain.png"
+    
+    def terrain_path(self):
+        return self._terrain_path
+    
+    @property
+    def isEmpty(self):
+        return self._isEmpty
+    
+    @property
+    def tooBig(self):
+        return self._too_big
+    
+    
+def setup_resource_packs():
     terrains = {}
     try:
         os.mkdir("terrain-textures")
     except OSError:
         pass
+    terrains["Default"] = DefaultResourcePack()
     resourcePacks = directories.getAllOfAFile(os.path.join(directories.getMinecraftProfileDirectory(directories.getSelectedProfile()), "resourcepacks"), ".zip")
     for tex_pack in resourcePacks:
         rp = ResourcePack(tex_pack)
-        terrains[rp.pack_name] = rp.terrain_name
-        #ResourcePack("OCD pack 1.8.zip")
-    shutil.rmtree("textures/")
+        if not rp.isEmpty:
+            if not rp.tooBig:
+                terrains[rp.pack_name] = rp
+    try:
+        shutil.rmtree(directories.parentDir+os.path.sep+"textures")
+    except:
+        print "Could not remove \"textures\" directory"
+        pass
     return terrains
-    
-    
-packs = setup_terrain_textures()
+
+class ResourcePackHandler:
+
+    def __init__(self):
+        try:
+            os.mkdir(directories.parentDir+os.path.sep+"textures")
+        except OSError:
+            pass
+        self._resource_packs = setup_resource_packs()
+        self._selected_resource_pack = Settings.resource_pack.get()
+
+    @property
+    def resource_packs(self):
+        return self._resource_packs
+
+    def get_available_resource_packs(self):
+        return self._resource_packs.keys()
+
+    def reload_resource_packs(self):
+        self._resource_packs = setup_resource_packs()
+
+    def get_selected_resource_pack_name(self):
+        return self._selected_resource_pack
+
+    def set_selected_resource_pack_name(self, name):
+        Settings.resource_pack.set(name)
+        self._selected_resource_pack = name
+
+    def get_selected_resource_pack(self):
+        return self._resource_packs[self._selected_resource_pack]
+
+packs = ResourcePackHandler()

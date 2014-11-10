@@ -1,16 +1,9 @@
-import sys
-import os
-import directories
 import config
 import albow
 import mceutils
-from pygame import display, event, key, KMOD_ALT, KMOD_CTRL, KMOD_LALT, KMOD_META, KMOD_RALT, KMOD_SHIFT, mouse, \
-    MOUSEMOTION
-from albow.dialogs import Dialog, QuickDialog, wrapped_label
-from albow import alert, ask, AttrRef, Button, Column, get_font, Grid, input_text, IntField, Menu, root, Row, \
-    TableColumn, TableView, TextField, TimeField, Widget, CheckBox
-from albow.controls import Label, SmallValueDisplay, ValueDisplay
-from albow.translate import tr
+from pygame import key
+from albow.dialogs import Dialog
+from albow.translate import _
 from glbackground import Panel
 
 ESCAPE = '\033'
@@ -20,11 +13,9 @@ def remapMouseButton(button):
     if button < len(buttons):
         return buttons[button]
     return button
-    
+
 def getKey(evt, i=0):
     keyname = key.name(evt.key)
-    if keyname == 'Enter':
-        keyname = 'Return'
     if 'left' in keyname and len(keyname) > 5:
         keyname = keyname[5:]
     elif 'right' in keyname and len(keyname) > 6:
@@ -41,8 +32,12 @@ def getKey(evt, i=0):
             newKeyname += "Ctrl-"
         if evt.alt == True and keyname != "Alt" and i != 1:
             newKeyname += "Alt-"
-    
+
         keyname = newKeyname + keyname
+
+        if keyname == 'Enter':
+            keyname = 'Return'
+
         return keyname
 
 class KeyConfigPanel(Dialog):
@@ -67,16 +62,28 @@ class KeyConfigPanel(Dialog):
         "Toggle Renderer",
         "",
         "<Blocks>",
-        "Rotate",
-        "Roll",
-        "Flip",
-        "Mirror",
         "Swap",
         "Delete Blocks",
         "Increase Reach",
         "Decrease Reach",
         "Reset Reach",
         "Export Selection",
+        "Brush Line Tool",
+        "",
+        "<Clone>",
+        "Rotate (Clone)",
+        "Roll (Clone)",
+        "Flip",
+        "Mirror",
+        "",
+        "<Brush>",
+        "Rotate (Brush)",
+        "Roll (Brush)",
+        "Increase Brush",
+        "Decrease Brush",
+        "",
+        "<Fill and Replace>",
+        "Replace Shortcut",
         "",
         "<Functions>",
         "Select All",
@@ -103,13 +110,13 @@ class KeyConfigPanel(Dialog):
         "",
         "<Advanced>",
         "Debug Overlay",
-        "Blocks-Only",
         "Show Block Info",
         "Pick Block",
         "Select Chunks",
         "Deselect Chunks",
-        "Brush Line Tool",
-        "Snap Clone to Axis"
+        "Snap Clone to Axis",
+        "Blocks-Only Modifier",
+        "Fast Increment Modifier"
     ]
 
     presets = {"WASD": [
@@ -130,16 +137,25 @@ class KeyConfigPanel(Dialog):
         ("View Distance", "Ctrl-F"),
         ("Toggle Renderer", "Ctrl-M"),
 
-        ("Rotate", "E"),
-        ("Roll", "R"),
-        ("Flip", "F"),
-        ("Mirror", "G"),
         ("Swap", "X"),
         ("Delete Blocks", "Delete"),
         ("Increase Reach", "Scroll Up"),
         ("Decrease Reach", "Scroll Down"),
         ("Reset Reach", "Button 3"),
         ("Export Selection", "Ctrl-E"),
+        ("Brush Line Tool", "Z"),
+
+        ("Rotate (Clone)", "E"),
+        ("Roll (Clone)", "R"),
+        ("Flip", "F"),
+        ("Mirror", "G"),
+
+        ("Rotate (Brush)", "E"),
+        ("Roll (Brush)", "G"),
+        ("Increase Brush", "R"),
+        ("Decrease Brush", "F"),
+
+        ("Replace Shortcut", "R"),
 
         ("Select All", "Ctrl-A"),
         ("Deselect", "Ctrl-D"),
@@ -160,15 +176,15 @@ class KeyConfigPanel(Dialog):
         ("Close World", "Ctrl-W"),
         ("World Info", "Ctrl-I"),
         ("Quit", "Ctrl-Q"),
-        
+
         ("Debug Overlay", "0"),
-        ("Blocks-Only", "Alt"),
         ("Show Block Info", "Alt"),
         ("Pick Block", "Alt"),
         ("Select Chunks", "Z"),
         ("Deselect Chunks", "Alt"),
-        ("Brush Line Tool", "Z"),
-        ("Snap Clone to Axis", "Ctrl")
+        ("Snap Clone to Axis", "Ctrl"),
+        ("Blocks-Only Modifier", "Alt"),
+        ("Fast Increment Modifier", "Ctrl")
     ],
                "Arrows": [
                    ("Forward", "Up"),
@@ -188,16 +204,25 @@ class KeyConfigPanel(Dialog):
                    ("View Distance", "Ctrl-F"),
                    ("Toggle Renderer", "Ctrl-M"),
 
-                   ("Rotate", "Home"),
-                   ("Roll", "End"),
-                   ("Flip", "Insert"),
-                   ("Mirror", "Delete"),
                    ("Swap", "\\"),
                    ("Delete Blocks", "Backspace"),
                    ("Increase Reach", "Scroll Up"),
                    ("Decrease Reach", "Scroll Down"),
                    ("Reset Reach", "Button 3"),
                    ("Export Selection", "Ctrl-E"),
+                   ("Brush Line Tool", "Z"),
+
+                   ("Rotate (Clone)", "Home"),
+                   ("Roll (Clone)", "End"),
+                   ("Flip", "Insert"),
+                   ("Mirror", "Delete"),
+
+                   ("Rotate (Brush)", "Home"),
+                   ("Roll (Brush)", "Delete"),
+                   ("Increase Brush", "End"),
+                   ("Decrease Brush", "Insert"),
+
+                   ("Replace Shortcut", "R"),
 
                    ("Select All", "Ctrl-A"),
                    ("Deselect", "Ctrl-D"),
@@ -218,15 +243,15 @@ class KeyConfigPanel(Dialog):
                    ("Close World", "Ctrl-W"),
                    ("World Info", "Ctrl-I"),
                    ("Quit", "Ctrl-Q"),
-                   
+
                    ("Debug Overlay", "0"),
-                   ("Blocks-Only", "Alt"),
                    ("Show Block Info", "Alt"),
                    ("Pick Block", "Alt"),
                    ("Select Chunks", "Z"),
                    ("Deselect Chunks", "Alt"),
-                   ("Brush Line Tool", "Z"),
-                   ("Snap Clone to Axis", "Ctrl")
+                   ("Snap Clone to Axis", "Ctrl"),
+                   ("Blocks-Only Modifier", "Alt"),
+                   ("Fast Increment Modifier", "Ctrl")
                ],
                "Numpad": [
                    ("Forward", "[8]"),
@@ -246,16 +271,25 @@ class KeyConfigPanel(Dialog):
                    ("View Distance", "Ctrl-F"),
                    ("Toggle Renderer", "Ctrl-M"),
 
-                   ("Rotate", "[-]"),
-                   ("Roll", "[+]"),
-                   ("Flip", "[/]"),
-                   ("Mirror", "[*]"),
                    ("Swap", "[.]"),
                    ("Delete Blocks", "Delete"),
                    ("Increase Reach", "Scroll Up"),
                    ("Decrease Reach", "Scroll Down"),
                    ("Reset Reach", "Button 3"),
                    ("Export Selection", "Ctrl-E"),
+                   ("Brush Line Tool", "Z"),
+
+                   ("Rotate (Clone)", "[-]"),
+                   ("Roll (Clone)", "[+]"),
+                   ("Flip", "[/]"),
+                   ("Mirror", "[*]"),
+
+                   ("Rotate (Brush)", "[-]"),
+                   ("Roll (Brush)", "[*]"),
+                   ("Increase Brush", "[+]"),
+                   ("Decrease Brush", "[/]"),
+
+                   ("Replace Shortcut", "R"),
 
                    ("Select All", "Ctrl-A"),
                    ("Deselect", "Ctrl-D"),
@@ -276,15 +310,15 @@ class KeyConfigPanel(Dialog):
                    ("Close World", "Ctrl-W"),
                    ("World Info", "Ctrl-I"),
                    ("Quit", "Ctrl-Q"),
-                   
+
                    ("Debug Overlay", "0"),
-                   ("Blocks-Only", "Alt"),
                    ("Show Block Info", "Alt"),
                    ("Pick Block", "Alt"),
                    ("Select Chunks", "Z"),
                    ("Deselect Chunks", "Alt"),
-                   ("Brush Line Tool", "Z"),
-                   ("Snap Clone to Axis", "Ctrl")
+                   ("Snap Clone to Axis", "Ctrl"),
+                   ("Blocks-Only Modifier", "Alt"),
+                   ("Fast Increment Modifier", "Ctrl")
                ],
  "WASD Old": [
         ("Forward", "W"),
@@ -304,16 +338,25 @@ class KeyConfigPanel(Dialog):
         ("View Distance", "Ctrl-F"),
         ("Toggle Renderer", "Ctrl-M"),
 
-        ("Rotate", "E"),
-        ("Roll", "R"),
-        ("Flip", "F"),
-        ("Mirror", "G"),
         ("Swap", "X"),
         ("Delete Blocks", "Delete"),
         ("Increase Reach", "Scroll Up"),
         ("Decrease Reach", "Scroll Down"),
         ("Reset Reach", "Button 3"),
         ("Export Selection", "Ctrl-E"),
+        ("Brush Line Tool", "Shift"),
+
+        ("Rotate (Clone)", "E"),
+        ("Roll (Clone)", "R"),
+        ("Flip", "F"),
+        ("Mirror", "G"),
+
+        ("Rotate (Brush)", "E"),
+        ("Roll (Brush)", "G"),
+        ("Increase Brush", "R"),
+        ("Decrease Brush", "F"),
+
+        ("Replace Shortcut", "R"),
 
         ("Select All", "Ctrl-A"),
         ("Deselect", "Ctrl-D"),
@@ -334,17 +377,17 @@ class KeyConfigPanel(Dialog):
         ("Close World", "Ctrl-W"),
         ("World Info", "Ctrl-I"),
         ("Quit", "Ctrl-Q"),
-        
+
         ("Debug Overlay", "0"),
-        ("Blocks-Only", "Alt"),
         ("Show Block Info", "Alt"),
         ("Pick Block", "Alt"),
         ("Select Chunks", "Ctrl"),
         ("Deselect Chunks", "Shift"),
-        ("Brush Line Tool", "Shift"),
-        ("Snap Clone to Axis", "Shift")
+        ("Snap Clone to Axis", "Shift"),
+        ("Blocks-Only Modifier", "Alt"),
+        ("Fast Increment Modifier", "Shift")
     ]}
- 
+
 
     selectedKeyIndex = 0
 
@@ -391,7 +434,7 @@ class KeyConfigPanel(Dialog):
         self.changes = {}
         config.saveConfig()
         self.dismiss()
-    
+
     def choosePreset(self):
         preset = self.choiceButton.selectedChoice
         keypairs = self.presets[preset]
@@ -417,7 +460,7 @@ class KeyConfigPanel(Dialog):
             elif key == 'mouse7':
                 key = 'Button 5'
                 config.config.set("Keys", configKey, "Button 5")
-            
+
         else:
             key = ""
         return configKey, key
@@ -429,7 +472,7 @@ class KeyConfigPanel(Dialog):
         self.selectedKeyIndex = i
         if evt.num_clicks == 2:
             self.askAssignSelectedKey()
-            
+
     def key_down(self, evt):
         keyname = getKey(evt)
         if keyname == 'Escape':
@@ -464,7 +507,7 @@ class KeyConfigPanel(Dialog):
         panel.bg_color = (0.5, 0.5, 0.6, 1.0)
 
         if labelString is None:
-            labelString = tr("Press a key to assign to the action \"{0}\"\n\nPress ESC to cancel. Press Shift-ESC to unbind.").format(configKey)
+            labelString = _("Press a key to assign to the action \"{0}\"\n\nPress ESC to cancel. Press Shift-ESC to unbind.").format(configKey)
         label = albow.Label(labelString)
         panel.add(label)
         panel.shrink_wrap()
@@ -494,11 +537,18 @@ class KeyConfigPanel(Dialog):
         keyname = panel.present()
         if keyname == "Return" and self.enter == 1:
             self.enter = 0
-            self.askAssignKey(configKey, tr("Press a key to assign to the action \"{0}\"\n\nPress ESC to cancel. Press Shift-ESC to unbind.").format(configKey))
+            self.askAssignKey(configKey, _("Press a key to assign to the action \"{0}\"\n\nPress ESC to cancel. Press Shift-ESC to unbind.").format(configKey))
             return True
-        
+
         self.enter = 0
         if keyname != "Escape" and keyname != "Shift-Escape" and keyname not in ["Alt-F4","F1","F2","F3","F4","F5","1","2","3","4","5","6","7","8","9","Ctrl-Alt-F9","Ctrl-Alt-F10"]:
+            if "Modifier" in configKey and keyname != "Ctrl" and keyname != "Alt" and keyname != "Shift":
+              self.askAssignKey(configKey,
+                                     _("{0} is not a modifier. "
+                                     "Press a new key.\n\n"
+                                     "Press ESC to cancel. Press Shift-ESC to unbind.")
+                                     .format(keyname))
+              return True
             oldkey = config.config.get("Keys", configKey)
             config.config.set("Keys", configKey, keyname)
             self.changes[configKey] = oldkey
@@ -507,11 +557,11 @@ class KeyConfigPanel(Dialog):
             config.config.set("Keys", configKey, "None")
         elif keyname != "Escape":
             self.askAssignKey(configKey,
-                                     tr("You can't use the key {0}. "
+                                     _("You can't use the key {0}. "
                                      "Press a new key.\n\n"
                                      "Press ESC to cancel. Press Shift-ESC to unbind.")
                                      .format(keyname))
             return True
-            
+
         else:
             return True

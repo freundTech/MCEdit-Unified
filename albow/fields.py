@@ -7,8 +7,9 @@ import pygame
 from pygame.locals import K_LEFT, K_RIGHT, K_TAB, K_c, K_v, SCRAP_TEXT, K_UP, K_DOWN
 from widget import Widget, overridable_property
 from controls import Control
+import config
 #-#
-from translate import tr
+from translate import _
 #-#
 #---------------------------------------------------------------------------
 
@@ -30,7 +31,7 @@ class TextEditor(Widget):
         return self._text
 
     def set_text(self, text):
-        self._text = tr(text)
+        self._text = _(text)
 
     text = overridable_property('text')
 
@@ -51,6 +52,7 @@ class TextEditor(Widget):
             draw.line(surface, fg, (x, y), (x, y + h - 1))
 
     def key_down(self, event):
+        self.get_root().mcedit.editor.key_down(event, 1, 1)
         if not (event.cmd or event.alt):
             k = event.key
             if k == K_LEFT:
@@ -87,6 +89,9 @@ class TextEditor(Widget):
                 self.attention_lost()
 
         self.call_parent_handler('key_down', event)
+
+    def key_up(self, event):
+        self.get_root().mcedit.editor.key_up(event)
 
     def get_text_and_insertion_point(self):
         text = self.get_text()
@@ -232,7 +237,7 @@ class Field(Control, TextEditor):
 
     def set_text(self, text):
         self.editing = True
-        self._text = tr(text)
+        self._text = _(text)
         if self.should_commit_immediately(text):
             self.commit()
 
@@ -304,7 +309,7 @@ class TextField(Field):
 
 
 class IntField(Field):
-    tooltipText = tr("Point here and use mousewheel to adjust")
+    tooltipText = _("Point here and use mousewheel to adjust")
 
     def type(self, i):
         try:
@@ -320,7 +325,7 @@ class IntField(Field):
 
     @property
     def increment(self):
-        if key.get_mods() & KMOD_SHIFT:
+        if (config.config.get("Keys", "Fast Increment Modifier") == "Shift" and key.get_mods() & KMOD_SHIFT) or (config.config.get("Keys", "Fast Increment Modifier") == "Ctrl" and (key.get_mods() & KMOD_CTRL) or (key.get_mods() & KMOD_META)) or (config.config.get("Keys", "Fast Increment Modifier") == "Alt" and key.get_mods() & KMOD_ALT):
             return self._shift_increment
         else:
             return self._increment
@@ -422,14 +427,14 @@ class TimeField(Field):
 
 
 from pygame import key
-from pygame.locals import KMOD_SHIFT
+from pygame.locals import KMOD_SHIFT, KMOD_CTRL, KMOD_ALT, KMOD_META
 
 
 class FloatField(Field):
     type = float
     _increment = 0.1
     _shift_increment = 16.0
-    tooltipText = tr("Point here and use mousewheel to adjust")
+    tooltipText = _("Point here and use mousewheel to adjust")
 
     allowed_chars = '-+.0123456789f'
 
@@ -438,7 +443,7 @@ class FloatField(Field):
 
     @property
     def increment(self):
-        if key.get_mods() & KMOD_SHIFT:
+        if (config.config.get("Keys", "Fast Increment Modifier") == "Shift" and key.get_mods() & KMOD_SHIFT) or (config.config.get("Keys", "Fast Increment Modifier") == "Ctrl" and (key.get_mods() & KMOD_CTRL) or (key.get_mods() & KMOD_META)) or (config.config.get("Keys", "Fast Increment Modifier") == "Alt" and key.get_mods() & KMOD_ALT):
             return self._shift_increment
         return self._increment
 
@@ -493,7 +498,7 @@ class TextEditorWrapped(Widget):
         return self._text
 
     def set_text(self, text):
-        self._text = tr(text)
+        self._text = _(text)
         self.textChanged = True
 
     text = overridable_property('text')
@@ -670,6 +675,9 @@ class TextEditorWrapped(Widget):
                 self.attention_lost()
 
         self.call_parent_handler('key_down', event)
+
+    def key_up(self, event):
+        pass
 
     def get_text_and_insertion_point(self):
         text = self.get_text()
@@ -930,7 +938,7 @@ class TextEditorWrapped(Widget):
         return i
 
     def change_text(self, text):
-        self.set_text(tr(text))
+        self.set_text(_(text))
         self.textChanged = True
         self.updateTextWrap()
         self.call_handler('change_action')
@@ -1036,7 +1044,7 @@ class FieldWrapped(Control, TextEditorWrapped):
         if x == self.empty:
             return ""
         else:
-            return self.format % tr(x)
+            return self.format % _(x)
 
     def get_text(self):
         if self.editing:
@@ -1046,7 +1054,7 @@ class FieldWrapped(Control, TextEditorWrapped):
 
     def set_text(self, text):
         self.editing = True
-        self._text = tr(text)
+        self._text = _(text)
         if self.should_commit_immediately(text):
             self.commit()
 

@@ -16,9 +16,8 @@ import os
 import traceback
 from OpenGL import GL
 import numpy
-import pygame
 from albow import Widget, IntField, Column, Row, Label, Button, CheckBox, AttrRef, FloatField, alert
-from albow.translate import tr
+from albow.translate import _
 from depths import DepthOffset
 from editortools.editortool import EditorTool
 from editortools.nudgebutton import NudgeButton
@@ -121,11 +120,11 @@ class BlockCopyOperation(Operation):
         return BoundingBox(self.destPoint, self.sourceBox.size)
 
     def name(self):
-        return tr("Copy {0} blocks").format(self.sourceBox.volume)
+        return _("Copy {0} blocks").format(self.sourceBox.volume)
 
     def perform(self, recordUndo=True):
         if self.level.saving:
-            alert(tr("Cannot perform action while saving is taking place"))
+            alert(_("Cannot perform action while saving is taking place"))
             return
         sourceBox = self.sourceBox
 
@@ -145,7 +144,7 @@ class BlockCopyOperation(Operation):
         with setWindowCaption("Copying - "):
             i = self.level.copyBlocksFromIter(self.sourceLevel, self.sourceBox, self.destPoint, blocksToCopy,
                                               create=True, biomes=self.copyBiomes, staticCommands=self.staticCommands, moveSpawnerPos=self.moveSpawnerPos, first=False)
-            showProgress(tr("Copying {0:n} blocks...").format(self.sourceBox.volume), i)
+            showProgress(_("Copying {0:n} blocks...").format(self.sourceBox.volume), i)
 
     def bufferSize(self):
         return 123456
@@ -207,10 +206,10 @@ class CloneOperation(Operation):
 
     def perform(self, recordUndo=True):
         if self.level.saving:
-            alert(tr("Cannot perform action while saving is taking place"))
+            alert(_("Cannot perform action while saving is taking place"))
             return
         with setWindowCaption("COPYING - "):
-            self.editor.freezeStatus(tr("Copying %0.1f million blocks") % (float(self._dirtyBox.volume) / 1048576.,))
+            self.editor.freezeStatus(_("Copying %0.1f million blocks") % (float(self._dirtyBox.volume) / 1048576.,))
             if recordUndo:
                 chunks = set()
                 for op in self.blockCopyOps:
@@ -239,12 +238,12 @@ class CloneToolPanel(Panel):
         self.tool = tool
 
         rotateRow = Row((
-            Label(config.config.get("Keys", "Rotate")),
+            Label(config.config.get("Keys", "Rotate (Clone)")),
             Button("Rotate", width=80, action=tool.rotate, enable=self.transformEnable),
         ))
 
         rollRow = Row((
-            Label(config.config.get("Keys", "Roll")),
+            Label(config.config.get("Keys", "Roll (Clone)")),
             Button("Roll", width=80, action=tool.roll, enable=self.transformEnable),
         ))
 
@@ -332,7 +331,7 @@ class CloneToolPanel(Panel):
         self.copyBiomesCheckBox.tooltipText = self.copyBiomesLabel.tooltipText
 
         copyBiomesRow = Row((self.copyBiomesCheckBox, self.copyBiomesLabel))
-        
+
         self.staticCommandsCheckBox = CheckBox(ref=AttrRef(self.tool, "staticCommands"))
         self.staticCommandsLabel = Label("Change Coordinates")
         self.staticCommandsLabel.mouse_down = self.staticCommandsCheckBox.mouse_down
@@ -340,7 +339,7 @@ class CloneToolPanel(Panel):
         self.staticCommandsCheckBox.tooltipText = self.staticCommandsLabel.tooltipText
 
         staticCommandsRow = Row((self.staticCommandsCheckBox, self.staticCommandsLabel))
-        
+
         self.moveSpawnerPosCheckBox = CheckBox(ref=AttrRef(self.tool, "moveSpawnerPos"))
         self.moveSpawnerPosLabel = Label("Change Spawners")
         self.moveSpawnerPosLabel.mouse_down = self.moveSpawnerPosCheckBox.mouse_down
@@ -350,7 +349,7 @@ class CloneToolPanel(Panel):
         moveSpawnerPosRow = Row((self.moveSpawnerPosCheckBox, self.moveSpawnerPosLabel))
 
         self.performButton = Button("Clone", width=100, align="c")
-        self.performButton.tooltipText = "Shortcut: ENTER"
+        self.performButton.tooltipText = "Shortcut: Enter"
         self.performButton.action = tool.confirm
         self.performButton.enable = lambda: (tool.destPoint is not None)
         if self.useOffsetInput:
@@ -434,7 +433,7 @@ class CloneTool(EditorTool):
         self.optionsPanel = CloneToolOptions(self)
 
         self.destPoint = None
-        
+
         self.snapCloneKey = 0
 
     @property
@@ -444,7 +443,7 @@ class CloneTool(EditorTool):
         if self.draggingFace is not None:
             return "Mousewheel to move along the third axis. Hold {0} to only move along one axis.".format(config.config.get("Keys", "Snap Clone to Axis"))
 
-        return "Click and drag to reposition the item. Double-click to pick it up. Click Clone or press ENTER to confirm."
+        return "Click and drag to reposition the item. Double-click to pick it up. Click Clone or press Enter to confirm."
 
     def quickNudge(self, nudge):
         return map(int.__mul__, nudge, self.selectionBox().size)
@@ -521,7 +520,7 @@ class CloneTool(EditorTool):
 
         if box.volume > self.maxBlocks:
             self.editor.mouseLookOff()
-            alert(tr("Selection exceeds {0:n} blocks. Increase the block buffer setting and try again.").format(
+            alert(_("Selection exceeds {0:n} blocks. Increase the block buffer setting and try again.").format(
                 self.maxBlocks))
             self.editor.toolbar.selectTool(-1)
             return
@@ -866,13 +865,13 @@ class CloneTool(EditorTool):
 
     def option2(self):
         self.copyWater = not self.copyWater
-        
+
     def option3(self):
         self.copyBiomes = not self.copyBiomes
-        
+
     def option4(self):
     	self.staticCommands = not self.staticCommands
-    	
+
     def option5(self):
         self.moveSpawnerPos = not self.moveSpawnerPos
 
@@ -948,12 +947,12 @@ class CloneTool(EditorTool):
 
         self.draggingFace = None
         self.draggingStartPoint = None
-        
+
     def keyDown(self,evt):
         keyname = evt.dict.get('keyname', None) or keys.getKey(evt)
         if keyname == config.config.get('Keys', 'Snap Clone to Axis'):
             self.snapCloneKey = 1
-    
+
     def keyUp(self, evt):
         keyname = evt.dict.get('keyname', None) or keys.getKey(evt)
         if keyname == config.config.get('Keys', 'Snap Clone to Axis'):
@@ -1086,7 +1085,7 @@ class ConstructionTool(CloneTool):
         pass
 
     def quickNudge(self, nudge):
-        return map(lambda x: x * 8, nudge)
+        return map(int.__mul__, nudge, self.selectionBox().size)
 
     def __init__(self, *args):
         CloneTool.__init__(self, *args)
@@ -1099,7 +1098,7 @@ class ConstructionTool(CloneTool):
         if self.destPoint == None:
             return "Click to set this item down."
 
-        return "Click and drag to reposition the item. Double-click to pick it up. Click Import or press ENTER to confirm."
+        return "Click and drag to reposition the item. Double-click to pick it up. Click Import or press Enter to confirm."
 
     def showPanel(self):
         CloneTool.showPanel(self)
@@ -1179,7 +1178,7 @@ class ConstructionTool(CloneTool):
             if filename:
                 # self.editor.toolbar.selectTool(-1)
                 alert(
-                    tr(u"I don't know how to import this file: {0}.\n\nError: {1!r}").format(os.path.basename(filename), e))
+                    _(u"I don't know how to import this file: {0}.\n\nError: {1!r}").format(os.path.basename(filename), e))
 
             return
 
