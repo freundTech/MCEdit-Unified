@@ -14,14 +14,9 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE."""
 #-# Modifiedby D.C.-G. for translation purpose
 from OpenGL import GL
 import numpy
-<<<<<<< HEAD
 import os
 from albow import TableView, TableColumn, Label, Button, Column, CheckBox, AttrRef, Row, ask, alert, input_text
-from albow.translate import tr
-=======
-from albow import TableView, TableColumn, Label, Button, Column, CheckBox, AttrRef, Row, ask, alert
 from albow.translate import _
->>>>>>> upstream/master
 import config
 from editortools.editortool import EditorTool
 from editortools.tooloptions import ToolOptions
