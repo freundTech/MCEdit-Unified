@@ -1039,7 +1039,6 @@ class MCInfdevOldLevel(ChunkedLevelMixin, EntityLevel):
 
         self.playerTagCache = {}
         self.players = []
-        self.playersToRemove = []
         assert not (create and readonly)
 
         if os.path.basename(filename) in ("level.dat", "level.dat_old"):
