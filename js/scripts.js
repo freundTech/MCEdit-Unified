@@ -167,7 +167,7 @@ $(document).ready(function(){
 		}
 	} else {
 		$('title').html('MCEdit Fork - Rate Limit Exceededddddddddddddddddddddddddddd');
-		$('body').html('<h1>Rate Limit Exceeded</h1><br>Click <a href="https://github.com/Khroki/MCEdit-Unified">here</a> to go to the repository page instead.');
+		$('body').html('<h1>Rate Limit Excezextczeded</h1><br>Click <a href="https://github.com/Khroki/MCEdit-Unified">here</a> to go to the repository page insteadtyerzhxtjc.');
 		$('body').css('background-color','#444444').css('text-align','center').css('color','white');
 	}
 });
