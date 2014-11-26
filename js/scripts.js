@@ -166,7 +166,7 @@ $(document).ready(function(){
 			alert('An error occured loading the webpage. Please try again later.');
 		}
 	} else {
-		$('title').html('MCEdit Fork - Rate Limit Exceeded');
+		$('title').html('MCEdit Fork - Rate Limit Exceededddddddddddddddddddddddddddd');
 		$('body').html('<h1>Rate Limit Exceeded</h1><br>Click <a href="https://github.com/Khroki/MCEdit-Unified">here</a> to go to the repository page instead.');
 		$('body').css('background-color','#444444').css('text-align','center').css('color','white');
 	}
